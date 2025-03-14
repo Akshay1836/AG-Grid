@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ModuleRegistry, themeQuartz } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
+import "ag-grid-enterprise"; // ✅ Ensure AG Grid Enterprise is loaded
+
 import {
   ClientSideRowModelModule,
   ColumnMenuModule,
@@ -14,7 +16,7 @@ import {
   SideBarModule,
   FiltersToolPanelModule,
   ColumnsToolPanelModule,
-  PivotModule
+  PivotModule,
 } from "ag-grid-enterprise";
 
 // ✅ Register Modules
@@ -31,7 +33,7 @@ ModuleRegistry.registerModules([
   SideBarModule,
   FiltersToolPanelModule,
   ColumnsToolPanelModule,
-  PivotModule
+  PivotModule,
 ]);
 
 // ✅ Custom Theme
@@ -51,18 +53,61 @@ const SavedViewsPanel = () => (
 );
 
 const App = () => {
-  const [rowData, setRowData] = useState(null);
 
-  const [columnDefs] = useState([
-    { field: "athlete" },
-    { field: "age", filter: "agNumberColumnFilter", maxWidth: 100 },
-    { field: "country", filter: "agSetColumnFilter" },
-    { field: "sport", filter: "agMultiColumnFilter" },
-    { field: "gold", filter: "agNumberColumnFilter", enableValue: true },
-    { field: "silver", filter: "agNumberColumnFilter", enableValue: true },
-    { field: "bronze", filter: "agNumberColumnFilter", enableValue: true },
-    { field: "total", enableValue: true },
-  ]);
+  const rowData = [
+    {
+      year: 2023,
+      financial_activity_description: "Investment Advisory",
+      financial_product_description: "Mutual Funds",
+      life_cycle_stage: "Growth",
+      ofg: "Yes",
+      siglum: "A1"
+    },
+    {
+      year: 2022,
+      financial_activity_description: "Loan Processing",
+      financial_product_description: "Home Loan",
+      life_cycle_stage: "Maturity",
+      ofg: "No",
+      siglum: "B2"
+    },
+    {
+      year: 2021,
+      financial_activity_description: "Insurance Underwriting",
+      financial_product_description: "Life Insurance",
+      life_cycle_stage: "Introduction",
+      ofg: "Yes",
+      siglum: "C3"
+    },
+    {
+      year: 2020,
+      financial_activity_description: "Wealth Management",
+      financial_product_description: "Equity Funds",
+      life_cycle_stage: "Expansion",
+      ofg: "No",
+      siglum: "D4"
+    },
+    {
+      year: 2019,
+      financial_activity_description: "Financial Planning",
+      financial_product_description: "Retirement Plans",
+      life_cycle_stage: "Decline",
+      ofg: "Yes",
+      siglum: "E5"
+    }
+  ];
+  
+
+  const columnDefs = [
+    { field: "siglum", headerName: "Siglum", filter: true },
+    { field: "year", headerName: "Year", filter: true, enableRowGroup: true, minWidth: 150 },
+    { field: "life_cycle_stage", headerName: "Life Cycle Stage", filter: true, enableRowGroup: true, width: 250, minWidth: 200 },
+    { field: "ofg", headerName: "OFG", filter: true, enableRowGroup: true, minWidth: 150 },
+    { field: "financial_activity_description", headerName: "Financial Activity", filter: true, enableRowGroup: true, width: 250, minWidth: 200 },
+    { field: "financial_product_description", headerName: "Financial Product", filter: true, enableRowGroup: true, minWidth: 200 },
+   
+ // Assuming siglum should also have a filter
+  ];
 
   const defaultColDef = useMemo(
     () => ({
@@ -70,7 +115,7 @@ const App = () => {
       minWidth: 150,
       filter: "agTextColumnFilter",
       suppressHeaderMenuButton: true, // ✅ Prevents duplicate filter icons
-      enablePivot:true
+      enablePivot: true,
     }),
     []
   );
@@ -82,13 +127,18 @@ const App = () => {
         .then((data) => setRowData(data));
     }, 2000); // ✅ Add delay to see loading spinner
   }, []);
+  const gridOptions = {
+    groupIncludeTotalFooter: true, // ✅ Shows total row at the bottom
+    groupIncludeFooter: true, // ✅ Shows subtotal for each group
+  };
 
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>🏆 Olympic Winners Data</h2>
-    
-      <div className="ag-theme-quartz-dark" style={styles.gridContainer}>
+
+      <div className="ag-theme-quartz" style={styles.gridContainer}>
         <AgGridReact
+          gridOptions={gridOptions}
           theme={myTheme}
           rowData={rowData}
           columnDefs={columnDefs}
@@ -117,10 +167,17 @@ const App = () => {
               {
                 id: "savedViews",
                 labelDefault: "Saved Views",
-                toolPanel: SavedViewsPanel, // ✅ Registering custom panel
+                toolPanel: SavedViewsPanel,
               },
             ],
             defaultToolPanel: "columns",
+          }}
+          enableRangeSelection={true} // ✅ Allows row selection for aggregation
+          statusBar={{
+            statusPanels: [
+              { statusPanel: "agTotalRowCountComponent", align: "left" }, // ✅ Shows total row count
+              { statusPanel: "agAggregationComponent", align: "right" }, // ✅ Shows sum, avg, min, max
+            ],
           }}
         />
       </div>
@@ -135,7 +192,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     height: "100vh",
-    maxHeight: "100vh",
+   
     overflow: "hidden",
   },
   title: {
@@ -145,7 +202,7 @@ const styles = {
   },
   gridContainer: {
     width: "90%",
-    height: "80vh",
+    height: "100vh",
     maxWidth: "1200px",
     borderRadius: "10px",
     overflow: "visible",
